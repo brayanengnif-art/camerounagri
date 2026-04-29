@@ -1,0 +1,342 @@
+{% extends "base.html" %}
+{% block title %}Nouvelle Collecte — AgriData{% endblock %}
+{% block extra_css %}
+<style>
+.page-header{background:linear-gradient(135deg,var(--leaf),#2d6636);padding:3rem 2rem;color:#fff;text-align:center}
+.page-header h1{font-family:'Playfair Display',serif;font-size:2.2rem;margin-bottom:0.5rem}
+.page-header p{color:rgba(255,255,255,0.75);font-size:0.95rem}
+.form-container{max-width:860px;margin:2.5rem auto;padding:0 1.5rem 4rem}
+.section-block{margin-bottom:2rem}
+.section-block h3{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--earth);border-left:4px solid var(--harvest);padding-left:0.75rem;margin-bottom:1.25rem}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.form-grid.three{grid-template-columns:1fr 1fr 1fr}
+.form-grid.full{grid-template-columns:1fr}
+.field{display:flex;flex-direction:column;gap:0.4rem}
+.field label{font-size:0.85rem;font-weight:600;color:var(--earth);letter-spacing:0.02em;text-transform:uppercase}
+.field input,.field select,.field textarea{padding:0.7rem 1rem;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.95rem;background:#fff;color:var(--text);transition:border .2s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--leaf)}
+.field textarea{resize:vertical;min-height:80px}
+.tab-bar{display:flex;gap:0.5rem;margin-bottom:2rem;flex-wrap:wrap}
+.tab{padding:0.55rem 1.2rem;border-radius:8px;border:1.5px solid var(--border);background:#fff;cursor:pointer;font-size:0.88rem;font-weight:500;color:var(--text-light);transition:all .2s}
+.tab.active{background:var(--leaf);color:#fff;border-color:var(--leaf)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.progress-bar{height:4px;background:var(--border);border-radius:4px;margin-bottom:2rem;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--leaf),var(--harvest));transition:width .4s;border-radius:4px}
+.submit-zone{display:flex;gap:1rem;justify-content:flex-end;padding-top:1.5rem;border-top:1px solid var(--border)}
+.required-star{color:var(--terracotta)}
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>📋 Nouvelle Fiche de Collecte</h1>
+  <p>Remplissez les informations par section — seules les infos disponibles sont obligatoires</p>
+</div>
+
+<div class="form-container">
+  <div class="progress-bar"><div class="progress-fill" id="progress" style="width:25%"></div></div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab(0)">📍 Localisation</button>
+    <button class="tab" onclick="switchTab(1)">🌽 Cultures</button>
+    <button class="tab" onclick="switchTab(2)">🐄 Élevage</button>
+    <button class="tab" onclick="switchTab(3)">🌦 Météo & Sol</button>
+    <button class="tab" onclick="switchTab(4)">🧪 Intrants</button>
+  </div>
+
+  <form id="form-collecte">
+
+  <!-- TAB 0 : Localisation -->
+  <div class="tab-panel active card" id="tab-0">
+    <div class="section-block">
+      <h3>🗺️ Identification & Localisation</h3>
+      <div class="form-grid">
+        <div class="field">
+          <label>Nom de l'agriculteur <span class="required-star">*</span></label>
+          <input type="text" name="agriculteur" placeholder="Jean Mbarga" required>
+        </div>
+        <div class="field">
+          <label>Région <span class="required-star">*</span></label>
+          <select name="region" required>
+            <option value="">— Sélectionner —</option>
+            <option>Adamaoua</option><option>Centre</option><option>Est</option>
+            <option>Extrême-Nord</option><option>Littoral</option><option>Nord</option>
+            <option>Nord-Ouest</option><option>Ouest</option><option>Sud</option><option>Sud-Ouest</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Département</label>
+          <input type="text" name="departement" placeholder="ex: Mfoundi">
+        </div>
+        <div class="field">
+          <label>Village / Localité</label>
+          <input type="text" name="localite" placeholder="ex: Obala">
+        </div>
+        <div class="field">
+          <label>Date de collecte <span class="required-star">*</span></label>
+          <input type="date" name="date_collecte" required>
+        </div>
+        <div class="field">
+          <label>Nom de l'agent enquêteur</label>
+          <input type="text" name="agent" placeholder="Agent terrain">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 1 : Cultures -->
+  <div class="tab-panel card" id="tab-1">
+    <div class="section-block">
+      <h3>🌿 Informations sur les Cultures</h3>
+      <div class="form-grid">
+        <div class="field">
+          <label>Type de culture principale</label>
+          <select name="culture">
+            <option value="">— Sélectionner —</option>
+            <option>Maïs</option><option>Cacao</option><option>Café</option>
+            <option>Manioc</option><option>Plantain</option><option>Arachide</option>
+            <option>Sorgho</option><option>Mil</option><option>Riz</option>
+            <option>Igname</option><option>Patate douce</option><option>Tomate</option>
+            <option>Coton</option><option>Palmier à huile</option><option>Autre</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Culture secondaire</label>
+          <input type="text" name="culture_sec" placeholder="ex: Haricot">
+        </div>
+        <div class="field">
+          <label>Surface cultivée (ha)</label>
+          <input type="number" name="surface_ha" placeholder="0.5" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Rendement estimé (kg/ha)</label>
+          <input type="number" name="rendement_kg_ha" placeholder="1200" min="0">
+        </div>
+        <div class="field">
+          <label>Système de culture</label>
+          <select name="systeme_culture">
+            <option value="">— Sélectionner —</option>
+            <option>Pluvial</option><option>Irrigué</option><option>Mixte</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Date de semis / plantation</label>
+          <input type="date" name="date_semis">
+        </div>
+        <div class="field">
+          <label>Date de récolte (prévue)</label>
+          <input type="date" name="date_recolte">
+        </div>
+        <div class="field">
+          <label>Perte estimée (%)</label>
+          <input type="number" name="perte_pct" placeholder="10" min="0" max="100">
+        </div>
+      </div>
+      <div class="form-grid full" style="margin-top:1rem">
+        <div class="field">
+          <label>Observations sur les cultures</label>
+          <textarea name="obs_culture" placeholder="Maladies, ravageurs, conditions particulières..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2 : Élevage -->
+  <div class="tab-panel card" id="tab-2">
+    <div class="section-block">
+      <h3>🐄 Élevage & Bétail</h3>
+      <div class="form-grid">
+        <div class="field">
+          <label>Pratique l'élevage ?</label>
+          <select name="fait_elevage">
+            <option value="">— Sélectionner —</option>
+            <option>Oui</option><option>Non</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Type d'élevage principal</label>
+          <select name="type_elevage">
+            <option value="">— Sélectionner —</option>
+            <option>Bovins</option><option>Caprins</option><option>Ovins</option>
+            <option>Porcins</option><option>Volaille</option><option>Pisciculture</option><option>Autre</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Nombre de têtes</label>
+          <input type="number" name="nb_tetes" placeholder="25" min="0">
+        </div>
+        <div class="field">
+          <label>Mode d'élevage</label>
+          <select name="mode_elevage">
+            <option value="">— Sélectionner —</option>
+            <option>Extensif</option><option>Intensif</option><option>Semi-intensif</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Production laitière (L/jour)</label>
+          <input type="number" name="production_lait_l" placeholder="15" min="0" step="0.5">
+        </div>
+        <div class="field">
+          <label>Incidents sanitaires récents</label>
+          <select name="incident_sanitaire">
+            <option value="">— Aucun —</option>
+            <option>Maladie (fièvre)</option><option>Parasites</option>
+            <option>Mortalité</option><option>Autre</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid full" style="margin-top:1rem">
+        <div class="field">
+          <label>Observations élevage</label>
+          <textarea name="obs_elevage" placeholder="Problèmes de pâturage, accès à l'eau, vaccination..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3 : Météo & Sol -->
+  <div class="tab-panel card" id="tab-3">
+    <div class="section-block">
+      <h3>🌍 Conditions Météo & Sol</h3>
+      <div class="form-grid three">
+        <div class="field">
+          <label>Précipitations (mm/mois)</label>
+          <input type="number" name="pluie_mm" placeholder="120" min="0">
+        </div>
+        <div class="field">
+          <label>Température moy. (°C)</label>
+          <input type="number" name="temp_moy_c" placeholder="26" min="0" max="50">
+        </div>
+        <div class="field">
+          <label>Saison de collecte</label>
+          <select name="saison">
+            <option value="">— Sélectionner —</option>
+            <option>Grande saison sèche</option><option>Petite saison sèche</option>
+            <option>Grande saison des pluies</option><option>Petite saison des pluies</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Type de sol</label>
+          <select name="type_sol">
+            <option value="">— Sélectionner —</option>
+            <option>Argileux</option><option>Sableux</option><option>Limoneux</option>
+            <option>Argilo-sableux</option><option>Ferralitique</option><option>Volcanique</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>pH estimé du sol</label>
+          <select name="ph_sol">
+            <option value="">— Sélectionner —</option>
+            <option>Acide (&lt;6)</option><option>Neutre (6-7)</option><option>Alcalin (&gt;7)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Accès à l'irrigation</label>
+          <select name="irrigation">
+            <option value="">— Sélectionner —</option>
+            <option>Oui — Pompe</option><option>Oui — Gravité</option>
+            <option>Non</option><option>En projet</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid full" style="margin-top:1rem">
+        <div class="field">
+          <label>Évènements climatiques extrêmes</label>
+          <textarea name="evenements_meteo" placeholder="Inondations, sécheresse, tempêtes signalées..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4 : Intrants -->
+  <div class="tab-panel card" id="tab-4">
+    <div class="section-block">
+      <h3>🧪 Intrants & Économie</h3>
+      <div class="form-grid">
+        <div class="field">
+          <label>Engrais utilisé (kg/ha)</label>
+          <input type="number" name="engrais_kg_ha" placeholder="50" min="0">
+        </div>
+        <div class="field">
+          <label>Type d'engrais</label>
+          <select name="type_engrais">
+            <option value="">— Sélectionner —</option>
+            <option>NPK</option><option>Urée</option><option>Compost</option>
+            <option>Fumier</option><option>Biologique</option><option>Mixte</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Pesticides utilisés (L/ha)</label>
+          <input type="number" name="pesticides_l_ha" placeholder="2" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Coût intrants (FCFA/ha)</label>
+          <input type="number" name="cout_intrants_fcfa" placeholder="35000" min="0">
+        </div>
+        <div class="field">
+          <label>Revenu estimé (FCFA/campagne)</label>
+          <input type="number" name="revenu_fcfa" placeholder="250000" min="0">
+        </div>
+        <div class="field">
+          <label>Accès au crédit agricole</label>
+          <select name="credit_agricole">
+            <option value="">— Sélectionner —</option>
+            <option>Oui — Banque</option><option>Oui — Micro-crédit</option>
+            <option>Oui — Coopérative</option><option>Non</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid full" style="margin-top:1rem">
+        <div class="field">
+          <label>Observations générales</label>
+          <textarea name="obs_generale" placeholder="Toute information utile sur l'exploitation..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="submit-zone">
+      <button type="button" class="btn" style="background:var(--mist)" onclick="switchTab(3)">← Retour</button>
+      <button type="submit" class="btn btn-primary" style="font-size:1rem;padding:0.8rem 2rem">✅ Enregistrer la Collecte</button>
+    </div>
+  </div>
+
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+let currentTab = 0;
+const tabs = document.querySelectorAll('.tab');
+const panels = document.querySelectorAll('.tab-panel');
+const progress = document.getElementById('progress');
+
+// set today's date
+document.querySelector('[name=date_collecte]').valueAsDate = new Date();
+
+function switchTab(i){
+  tabs.forEach(t=>t.classList.remove('active'));
+  panels.forEach(p=>p.classList.remove('active'));
+  tabs[i].classList.add('active');
+  panels[i].classList.add('active');
+  currentTab = i;
+  progress.style.width = ((i+1)/5*100)+'%';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+tabs.forEach((t,i)=>t.addEventListener('click',()=>switchTab(i)));
+
+document.getElementById('form-collecte').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const data = Object.fromEntries(fd.entries());
+  try{
+    const r = await fetch('/api/soumettre',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const j = await r.json();
+    if(j.status==='ok'){
+      showToast('✅ Collecte #'+j.id+' enregistrée avec succès !');
+      setTimeout(()=>{ e.target.reset(); switchTab(0); document.querySelector('[name=date_collecte]').valueAsDate=new Date(); },1500);
+    }
+  }catch(err){showToast('❌ Erreur réseau','#e74c3c')}
+});
+</script>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}AgriData — Collecte & Analyse Agricole{% endblock %}
+{% block extra_css %}
+<style>
+.hero{padding:5rem 2rem 4rem;text-align:center;background:linear-gradient(160deg,var(--soil) 0%,var(--earth) 60%,#7a4a2a 100%);color:#fff;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.hero-tag{display:inline-block;background:rgba(232,163,46,0.2);color:var(--harvest);padding:0.4rem 1rem;border-radius:20px;font-size:0.85rem;font-weight:600;letter-spacing:0.05em;margin-bottom:1.5rem;border:1px solid rgba(232,163,46,0.3)}
+.hero h1{font-family:'Playfair Display',serif;font-size:3.5rem;line-height:1.15;margin-bottom:1.2rem;max-width:700px;margin-inline:auto}
+.hero h1 em{color:var(--harvest);font-style:normal}
+.hero p{font-size:1.1rem;color:rgba(255,255,255,0.7);max-width:540px;margin:0 auto 2.5rem;line-height:1.7}
+.hero-ctas{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+.features{padding:4rem 2rem;background:var(--mist)}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;max-width:1100px;margin:0 auto}
+.feature-card{background:#fff;border-radius:16px;padding:2rem;border:1px solid var(--border);position:relative;overflow:hidden}
+.feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--grad)}
+.feature-card .icon{font-size:2.5rem;margin-bottom:1rem}
+.feature-card h3{font-family:'Playfair Display',serif;font-size:1.2rem;margin-bottom:0.6rem}
+.feature-card p{color:var(--text-light);font-size:0.92rem;line-height:1.65}
+.stats-bar{display:flex;gap:3rem;justify-content:center;padding:2.5rem;background:var(--soil);flex-wrap:wrap}
+.stat-item{text-align:center;color:#fff}
+.stat-item .val{font-family:'Playfair Display',serif;font-size:2.5rem;color:var(--harvest)}
+.stat-item .lbl{font-size:0.85rem;color:rgba(255,255,255,0.6);margin-top:0.2rem}
+.section-title{font-family:'Playfair Display',serif;font-size:2rem;text-align:center;margin-bottom:0.5rem}
+.section-sub{text-align:center;color:var(--text-light);margin-bottom:3rem;font-size:0.95rem}
+</style>
+{% endblock %}
+{% block content %}
+<div class="hero">
+  <div class="hero-tag">🌱 Plateforme Agricole — Cameroun</div>
+  <h1>Collectez & Analysez les <em>Données Agricoles</em> de Terrain</h1>
+  <p>Un outil moderne pour les agents de terrain, chercheurs et coopératives : collecte structurée, analyse descriptive et export des données de cultures, élevage, intrants et météo.</p>
+  <div class="hero-ctas">
+    <a href="/collecte" class="btn btn-harvest" style="font-size:1rem;padding:0.85rem 2rem">📋 Nouvelle Collecte</a>
+    <a href="/dashboard" class="btn" style="background:rgba(255,255,255,0.1);color:#fff;font-size:1rem;padding:0.85rem 2rem">📊 Voir le Dashboard</a>
+  </div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat-item"><div class="val" id="s-total">—</div><div class="lbl">Collectes enregistrées</div></div>
+  <div class="stat-item"><div class="val" id="s-surface">—</div><div class="lbl">Hectares couverts</div></div>
+  <div class="stat-item"><div class="val" id="s-cultures">—</div><div class="lbl">Types de cultures</div></div>
+  <div class="stat-item"><div class="val" id="s-regions">—</div><div class="lbl">Régions couvertes</div></div>
+</div>
+
+<div class="features">
+  <h2 class="section-title">Ce que vous pouvez collecter</h2>
+  <p class="section-sub">Un formulaire intégré couvrant tous les axes de l'agriculture camerounaise</p>
+  <div class="features-grid">
+    <div class="feature-card" style="--grad:linear-gradient(90deg,#3a7d44,#7aab5f)">
+      <div class="icon">🌽</div>
+      <h3>Cultures & Récoltes</h3>
+      <p>Enregistrez le type de culture, la surface cultivée, le rendement en kg/ha, et la date de récolte pour chaque parcelle.</p>
+    </div>
+    <div class="feature-card" style="--grad:linear-gradient(90deg,#c0622f,#e8a32e)">
+      <div class="icon">🐄</div>
+      <h3>Élevage & Bétail</h3>
+      <p>Suivez les types d'animaux, le nombre de têtes, la production laitière ou carnée et les incidents sanitaires.</p>
+    </div>
+    <div class="feature-card" style="--grad:linear-gradient(90deg,#2980b9,#6dd5fa)">
+      <div class="icon">🌦️</div>
+      <h3>Météo & Sol</h3>
+      <p>Notez les précipitations, la température, le type de sol et les observations climatiques de la campagne.</p>
+    </div>
+    <div class="feature-card" style="--grad:linear-gradient(90deg,#8e44ad,#c39bd3)">
+      <div class="icon">🧪</div>
+      <h3>Intrants Agricoles</h3>
+      <p>Dosages d'engrais, pesticides utilisés et leur coût — pour calculer la rentabilité des exploitations.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+fetch('/api/stats').then(r=>r.json()).then(d=>{
+  document.getElementById('s-total').textContent = d.total || 0;
+  document.getElementById('s-surface').textContent = d.surface_totale || 0;
+  document.getElementById('s-cultures').textContent = Object.keys(d.cultures||{}).length;
+  document.getElementById('s-regions').textContent = Object.keys(d.regions||{}).length;
+});
+</script>
+{% endblock %}

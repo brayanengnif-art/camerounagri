@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — AgriData{% endblock %}
+{% block extra_css %}
+<style>
+.dash-header{background:linear-gradient(135deg,#1a3a22,var(--leaf));padding:2.5rem 2rem;color:#fff}
+.dash-header h1{font-family:'Playfair Display',serif;font-size:2rem;margin-bottom:0.3rem}
+.dash-header p{color:rgba(255,255,255,0.7);font-size:0.9rem}
+.dash-actions{display:flex;gap:0.75rem;margin-top:1.5rem;flex-wrap:wrap}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.25rem;margin-bottom:2rem}
+.kpi{background:#fff;border-radius:14px;padding:1.5rem;border:1px solid var(--border);display:flex;align-items:center;gap:1.2rem}
+.kpi-icon{font-size:2.2rem;flex-shrink:0}
+.kpi-val{font-family:'Playfair Display',serif;font-size:2rem;color:var(--earth);line-height:1}
+.kpi-lbl{font-size:0.8rem;color:var(--text-light);margin-top:0.2rem;text-transform:uppercase;letter-spacing:0.04em}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem}
+.chart-card{background:#fff;border-radius:14px;padding:1.5rem;border:1px solid var(--border)}
+.chart-card h3{font-size:0.95rem;font-weight:600;color:var(--earth);margin-bottom:1.2rem;display:flex;align-items:center;gap:0.5rem}
+.chart-full{grid-column:1/-1}
+.table-card{background:#fff;border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:2rem}
+.table-card h3{padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);font-size:0.95rem;font-weight:600;color:var(--earth)}
+table{width:100%;border-collapse:collapse;font-size:0.88rem}
+th{background:var(--mist);padding:0.75rem 1rem;text-align:left;font-weight:600;color:var(--text-light);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.04em}
+td{padding:0.8rem 1rem;border-bottom:1px solid rgba(92,51,23,0.06);color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--cream)}
+.empty-state{text-align:center;padding:4rem 2rem;color:var(--text-light)}
+.empty-state .icon{font-size:3rem;margin-bottom:1rem}
+.no-data{text-align:center;padding:2rem;color:var(--text-light);font-size:0.9rem}
+@media(max-width:768px){.charts-grid{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="dash-header">
+  <div style="max-width:1200px;margin:0 auto">
+    <h1>📊 Tableau de Bord Analytique</h1>
+    <p>Analyse descriptive des données collectées sur le terrain</p>
+    <div class="dash-actions">
+      <a href="/collecte" class="btn btn-harvest">+ Nouvelle collecte</a>
+      <button class="btn" style="background:rgba(255,255,255,0.15);color:#fff" onclick="exportExcel()">📥 Export Excel</button>
+      <button class="btn" style="background:rgba(255,255,255,0.1);color:#fff" onclick="loadDash()">🔄 Actualiser</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div id="empty-state" class="empty-state card" style="display:none">
+    <div class="icon">🌱</div>
+    <h3 style="font-family:'Playfair Display',serif;font-size:1.5rem;margin-bottom:0.5rem">Aucune donnée collectée</h3>
+    <p>Commencez par saisir une fiche de collecte pour voir les analyses apparaître ici.</p>
+    <a href="/collecte" class="btn btn-primary" style="margin-top:1.5rem">Saisir la première collecte</a>
+  </div>
+
+  <div id="dash-content">
+    <!-- KPIs -->
+    <div class="kpi-grid" id="kpis"></div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>🌽 Répartition des cultures</h3>
+        <canvas id="chartCultures" height="220"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>📍 Collectes par région</h3>
+        <canvas id="chartRegions" height="220"></canvas>
+      </div>
+      <div class="chart-card chart-full">
+        <h3>📈 Rendements moyens par culture (kg/ha)</h3>
+        <canvas id="chartRendements" height="140"></canvas>
+      </div>
+      <div class="chart-card chart-full">
+        <h3>📅 Évolution des collectes dans le temps</h3>
+        <canvas id="chartTemps" height="120"></canvas>
+      </div>
+    </div>
+
+    <!-- Rendements table -->
+    <div class="table-card">
+      <h3>📋 Statistiques descriptives — Rendements</h3>
+      <div id="table-rendements"></div>
+    </div>
+
+    <!-- Raw data table -->
+    <div class="table-card">
+      <h3>📑 Données brutes collectées <span id="count-badge" style="font-weight:400;color:var(--text-light);font-size:0.85rem"></span></h3>
+      <div id="table-donnees" style="overflow-x:auto"></div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const COLORS = ['#3a7d44','#e8a32e','#c0622f','#2980b9','#8e44ad','#16a085','#d35400','#27ae60','#2c3e50','#e74c3c'];
+
+let charts = {};
+function destroyChart(id){ if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
+
+async function loadDash(){
+  const [stats, donnees] = await Promise.all([
+    fetch('/api/stats').then(r=>r.json()),
+    fetch('/api/donnees').then(r=>r.json())
+  ]);
+
+  if(stats.total === 0){
+    document.getElementById('empty-state').style.display='block';
+    document.getElementById('dash-content').style.display='none';
+    return;
+  }
+  document.getElementById('empty-state').style.display='none';
+  document.getElementById('dash-content').style.display='block';
+
+  // KPIs
+  const surf = stats.surface_totale || 0;
+  const regions = Object.keys(stats.regions||{}).length;
+  const avgRend = stats.rendements.length ? Math.round(stats.rendements.reduce((s,r)=>s+r.moy,0)/stats.rendements.length) : '—';
+  document.getElementById('kpis').innerHTML = `
+    <div class="kpi"><div class="kpi-icon">📋</div><div><div class="kpi-val">${stats.total}</div><div class="kpi-lbl">Collectes totales</div></div></div>
+    <div class="kpi"><div class="kpi-icon">🌿</div><div><div class="kpi-val">${surf} ha</div><div class="kpi-lbl">Surface couverte</div></div></div>
+    <div class="kpi"><div class="kpi-icon">📍</div><div><div class="kpi-val">${regions}</div><div class="kpi-lbl">Régions couvertes</div></div></div>
+    <div class="kpi"><div class="kpi-icon">🌾</div><div><div class="kpi-val">${avgRend}</div><div class="kpi-lbl">Rendement moy. kg/ha</div></div></div>
+    ${stats.intrants.engrais_moy ? `<div class="kpi"><div class="kpi-icon">🧪</div><div><div class="kpi-val">${stats.intrants.engrais_moy}</div><div class="kpi-lbl">Engrais moy. kg/ha</div></div></div>` : ''}
+    ${stats.elevage.total_tetes ? `<div class="kpi"><div class="kpi-icon">🐄</div><div><div class="kpi-val">${stats.elevage.total_tetes}</div><div class="kpi-lbl">Têtes de bétail</div></div></div>` : ''}
+  `;
+
+  // Chart cultures (doughnut)
+  destroyChart('cultures');
+  const cKeys = Object.keys(stats.cultures); const cVals = Object.values(stats.cultures);
+  if(cKeys.length){
+    charts['cultures'] = new Chart(document.getElementById('chartCultures'),{
+      type:'doughnut', data:{labels:cKeys,datasets:[{data:cVals,backgroundColor:COLORS,borderWidth:2,borderColor:'#fff'}]},
+      options:{responsive:true,plugins:{legend:{position:'right',labels:{font:{family:'DM Sans',size:12}}}}}
+    });
+  } else document.getElementById('chartCultures').parentElement.innerHTML += '<p class="no-data">Pas encore de données de cultures</p>';
+
+  // Chart régions (bar)
+  destroyChart('regions');
+  const rKeys = Object.keys(stats.regions); const rVals = Object.values(stats.regions);
+  if(rKeys.length){
+    charts['regions'] = new Chart(document.getElementById('chartRegions'),{
+      type:'bar', data:{labels:rKeys,datasets:[{label:'Collectes',data:rVals,backgroundColor:'#3a7d44',borderRadius:6}]},
+      options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'}},x:{grid:{display:false}}}}
+    });
+  }
+
+  // Chart rendements (horizontal bar)
+  destroyChart('rendements');
+  if(stats.rendements.length){
+    const rend = stats.rendements;
+    charts['rendements'] = new Chart(document.getElementById('chartRendements'),{
+      type:'bar',
+      data:{labels:rend.map(r=>r.culture),datasets:[
+        {label:'Min',data:rend.map(r=>r.min_v||0),backgroundColor:'rgba(192,98,47,0.5)',borderRadius:4},
+        {label:'Moy.',data:rend.map(r=>Math.round(r.moy||0)),backgroundColor:'rgba(58,125,68,0.85)',borderRadius:4},
+        {label:'Max',data:rend.map(r=>r.max_v||0),backgroundColor:'rgba(232,163,46,0.7)',borderRadius:4}
+      ]},
+      options:{responsive:true,scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'}}},plugins:{legend:{labels:{font:{family:'DM Sans'}}}}}
+    });
+
+    // Table descriptive
+    document.getElementById('table-rendements').innerHTML = `
+      <table><thead><tr><th>Culture</th><th>N</th><th>Min (kg/ha)</th><th>Moy. (kg/ha)</th><th>Max (kg/ha)</th></tr></thead>
+      <tbody>${rend.map(r=>`<tr><td><strong>${r.culture}</strong></td><td>${r.n}</td><td>${Math.round(r.min_v||0)}</td><td><strong>${Math.round(r.moy||0)}</strong></td><td>${Math.round(r.max_v||0)}</td></tr>`).join('')}</tbody></table>`;
+  } else document.getElementById('table-rendements').innerHTML='<p class="no-data">Aucune donnée de rendement saisie</p>';
+
+  // Chart temps
+  destroyChart('temps');
+  const tKeys = Object.keys(stats.series_temps); const tVals = Object.values(stats.series_temps);
+  if(tKeys.length){
+    charts['temps'] = new Chart(document.getElementById('chartTemps'),{
+      type:'line', data:{labels:tKeys,datasets:[{label:'Collectes/mois',data:tVals,borderColor:'#3a7d44',backgroundColor:'rgba(58,125,68,0.1)',fill:true,tension:0.4,pointBackgroundColor:'#3a7d44'}]},
+      options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'}},x:{grid:{display:false}}}}
+    });
+  }
+
+  // Données brutes
+  document.getElementById('count-badge').textContent = `(${donnees.length} enregistrement${donnees.length>1?'s':''})`;
+  if(donnees.length){
+    const cols = ['id','date_soumission','agriculteur','region','localite','culture','surface_ha','rendement_kg_ha','type_elevage','nb_tetes'];
+    const labels = {'id':'ID','date_soumission':'Date','agriculteur':'Agriculteur','region':'Région','localite':'Localité','culture':'Culture','surface_ha':'Surface (ha)','rendement_kg_ha':'Rdmt (kg/ha)','type_elevage':'Élevage','nb_tetes':'Têtes'};
+    document.getElementById('table-donnees').innerHTML = `
+      <table><thead><tr>${cols.map(c=>`<th>${labels[c]||c}</th>`).join('')}<th>Action</th></tr></thead>
+      <tbody>${donnees.slice().reverse().map(r=>`<tr>${cols.map(c=>`<td>${r[c]||'—'}</td>`).join('')}
+        <td><button class="btn btn-danger" style="padding:0.3rem 0.7rem;font-size:0.8rem" onclick="supprimer('${r.id}')">🗑</button></td>
+      </tr>`).join('')}</tbody></table>`;
+  }
+}
+
+async function supprimer(id){
+  if(!confirm('Supprimer cette collecte ?')) return;
+  await fetch('/api/supprimer/'+id,{method:'DELETE'});
+  showToast('🗑️ Collecte supprimée');
+  loadDash();
+}
+
+function exportExcel(){
+  window.location.href='/api/export/excel';
+}
+
+loadDash();
+</script>
+{% endblock %}
