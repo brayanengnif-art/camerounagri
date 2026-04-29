@@ -1,4 +1,4 @@
-# 🌾 AgriData Cameroun — Application de Collecte & Analyse Agricole
+#  Camerounagri — Application de Collecte & Analyse Agricole
 
 Application Python/Flask de collecte et analyse descriptive des données agricoles.
 
